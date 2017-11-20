@@ -1,6 +1,4 @@
-// Board relationships:
-// Bombs
-module samplegen(
+module board(
 	input [8:0] bombGrid,
 	input [8:0] revealGrid,
 	input [8:0] cursorGrid,
@@ -44,18 +42,17 @@ module samplegen(
 	assign row3 = nextCursorGrid[2:0];
 
 	genvar i;
-	integer x;
+	genvar j;
 	parameter GRID_SIZE = 3;
 	parameter STATE_SIZE = 4;
 	generate
-		for (i=0 i < GRID_SIZE; i=i+1) begin
-			for(j=0 j < GRID_SIZE; j=j+1) begin
-				x = i*GRID_SIZE + j;
-				if(x == 0) begin
+		for (i=0; i < GRID_SIZE; i=i+1) begin
+			for(j=0; j < GRID_SIZE; j=j+1) begin
+				if((i*GRID_SIZE + j) == 0) begin
 					square s_inst(
-						.setbomb(bombGrid[x]),
-						.setreveal(revealGrid[x]),
-						.setcursor(cursorGrid[x]),
+						.setbomb(bombGrid[(i*GRID_SIZE + j)]),
+						.setreveal(revealGrid[(i*GRID_SIZE + j)]),
+						.setcursor(cursorGrid[(i*GRID_SIZE + j)]),
 						.move(move),
 						.dir(dir),
 						.adjbomb({
@@ -66,45 +63,45 @@ module samplegen(
 							1'b0,
 							1'b0, 
 							1'b0, 
-							bombGrid[x+1]}),
+							bombGrid[(i*GRID_SIZE + j)+1]}),
 						.adjcursor({
 							cursorGrid[(i+1)*GRID_SIZE+j], 
 							1'b0, 
 							1'b0, 
-							cursorGrid[x+1]}),
-						.cursor(nextCursorGrid[x]),
-						.state(states[(x+1)*STATE_SIZE-1:x*STATE_SIZE])
+							cursorGrid[(i*GRID_SIZE + j)+1]}),
+						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
+						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
-				end else if(x == GRID_SIZE-1) begin
+				end else if((i*GRID_SIZE + j) == GRID_SIZE-1) begin
 					square s_inst(
-						.setbomb(bombGrid[x]),
-						.setreveal(revealGrid[x]),
-						.setcursor(cursorGrid[x]),
+						.setbomb(bombGrid[(i*GRID_SIZE + j)]),
+						.setreveal(revealGrid[(i*GRID_SIZE + j)]),
+						.setcursor(cursorGrid[(i*GRID_SIZE + j)]),
 						.move(move),
 						.dir(dir),
 						.adjbomb({
 							1'b0, 
 							bombGrid[(i+1)*GRID_SIZE+j], 
 							bombGrid[(i+1)*GRID_SIZE+j-1], 
-							bombGrid[x-1], 
+							bombGrid[(i*GRID_SIZE + j)-1], 
 							1'b0,
 							1'b0, 
 							1'b0, 
 							1'b0}),
 						.adjcursor({
 							cursorGrid[(i+1)*GRID_SIZE+j], 
-							cursorGrid[x-1], 
+							cursorGrid[(i*GRID_SIZE + j)-1], 
 							1'b0,
 							1'b0}),
-						.cursor(nextCursorGrid[x]),
-						.state(states[(x+1)*STATE_SIZE-1:x*STATE_SIZE])
+						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
+						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
 
-				end else if(x == (GRID_SIZE-1)*GRID_SIZE) begin
+				end else if((i*GRID_SIZE + j) == (GRID_SIZE-1)*GRID_SIZE) begin
 					square s_inst(
-						.setbomb(bombGrid[x]),
-						.setreveal(revealGrid[x]),
-						.setcursor(cursorGrid[x]),
+						.setbomb(bombGrid[(i*GRID_SIZE + j)]),
+						.setreveal(revealGrid[(i*GRID_SIZE + j)]),
+						.setcursor(cursorGrid[(i*GRID_SIZE + j)]),
 						.move(move),
 						.dir(dir),
 						.adjbomb({
@@ -115,68 +112,68 @@ module samplegen(
 							1'b0,
 							bombGrid[(i-1)*GRID_SIZE+j], 
 							bombGrid[(i-1)*GRID_SIZE+j+1], 
-							bombGrid[x+1]}),
+							bombGrid[(i*GRID_SIZE + j)+1]}),
 						.adjcursor({
 							1'b0, 
 							1'b0, 
 							cursorGrid[(i-1)*GRID_SIZE+j], 
-							cursorGrid[x+1]}),
-						.cursor(nextCursorGrid[x]),
-						.state(states[(x+1)*STATE_SIZE-1:x*STATE_SIZE])
+							cursorGrid[(i*GRID_SIZE + j)+1]}),
+						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
+						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
-				end else if(x == (GRID_SIZE*GRID_SIZE - 1)) begin
+				end else if((i*GRID_SIZE + j) == (GRID_SIZE*GRID_SIZE - 1)) begin
 					square s_inst(
-						.setbomb(bombGrid[x]),
-						.setreveal(revealGrid[x]),
-						.setcursor(cursorGrid[x]),
+						.setbomb(bombGrid[(i*GRID_SIZE + j)]),
+						.setreveal(revealGrid[(i*GRID_SIZE + j)]),
+						.setcursor(cursorGrid[(i*GRID_SIZE + j)]),
 						.move(move),
 						.dir(dir),
 						.adjbomb({
 							1'b0, 
 							1'b0, 
 							1'b0, 
-							bombGrid[x-1], 
+							bombGrid[(i*GRID_SIZE + j)-1], 
 							bombGrid[(i-1)*GRID_SIZE+j-1],
 							bombGrid[(i-1)*GRID_SIZE+j], 
 							1'b0, 
 							1'b0}),
 						.adjcursor({
 							1'b0, 
-							cursorGrid[x-1], 
+							cursorGrid[(i*GRID_SIZE + j)-1], 
 							cursorGrid[(i-1)*GRID_SIZE+j], 
 							1'b0}),
-						.cursor(nextCursorGrid[x]),
-						.state(states[(x+1)*STATE_SIZE-1:x*STATE_SIZE])
+						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
+						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
 				end else if(i == 0) begin
 					square s_inst(
-						.setbomb(bombGrid[x]),
-						.setreveal(revealGrid[x]),
-						.setcursor(cursorGrid[x]),
+						.setbomb(bombGrid[(i*GRID_SIZE + j)]),
+						.setreveal(revealGrid[(i*GRID_SIZE + j)]),
+						.setcursor(cursorGrid[(i*GRID_SIZE + j)]),
 						.move(move),
 						.dir(dir),
 						.adjbomb({
 							bombGrid[(i+1)*GRID_SIZE+j+1], 
 							bombGrid[(i+1)*GRID_SIZE+j], 
 							bombGrid[(i+1)*GRID_SIZE+j-1], 
-							bombGrid[x-1], 
+							bombGrid[(i*GRID_SIZE + j)-1], 
 							1'b0,
 							1'b0, 
 							1'b0, 
-							bombGrid[x+1]}),
+							bombGrid[(i*GRID_SIZE + j)+1]}),
 						.adjcursor({
 							cursorGrid[(i+1)*GRID_SIZE+j], 
-							cursorGrid[x-1], 
+							cursorGrid[(i*GRID_SIZE + j)-1], 
 							1'b0, 
-							cursorGrid[x+1]}),
-						.cursor(nextCursorGrid[x]),
-						.state(states[(x+1)*STATE_SIZE-1:x*STATE_SIZE])
+							cursorGrid[(i*GRID_SIZE + j)+1]}),
+						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
+						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
 				end else if(j == 0) begin
 					square s_inst(
-						.setbomb(bombGrid[x]),
-						.setreveal(revealGrid[x]),
-						.setcursor(cursorGrid[x]),
+						.setbomb(bombGrid[(i*GRID_SIZE + j)]),
+						.setreveal(revealGrid[(i*GRID_SIZE + j)]),
+						.setcursor(cursorGrid[(i*GRID_SIZE + j)]),
 						.move(move),
 						.dir(dir),
 						.adjbomb({
@@ -187,86 +184,86 @@ module samplegen(
 							1'b0,
 							bombGrid[(i-1)*GRID_SIZE+j], 
 							bombGrid[(i-1)*GRID_SIZE+j+1], 
-							bombGrid[x+1]}),
+							bombGrid[(i*GRID_SIZE + j)+1]}),
 						.adjcursor({
 							cursorGrid[(i+1)*GRID_SIZE+j], 
 							1'b0, 
 							cursorGrid[(i-1)*GRID_SIZE+j], 
-							cursorGrid[x+1]}),
-						.cursor(nextCursorGrid[x]),
-						.state(states[(x+1)*STATE_SIZE-1:x*STATE_SIZE])
+							cursorGrid[(i*GRID_SIZE + j)+1]}),
+						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
+						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
 				end else if(j == GRID_SIZE-1) begin
 					square s_inst(
-						.setbomb(bombGrid[x]),
-						.setreveal(revealGrid[x]),
-						.setcursor(cursorGrid[x]),
+						.setbomb(bombGrid[(i*GRID_SIZE + j)]),
+						.setreveal(revealGrid[(i*GRID_SIZE + j)]),
+						.setcursor(cursorGrid[(i*GRID_SIZE + j)]),
 						.move(move),
 						.dir(dir),
 						.adjbomb({
 							1'b0, 
 							bombGrid[(i+1)*GRID_SIZE+j], 
 							bombGrid[(i+1)*GRID_SIZE+j-1], 
-							bombGrid[x-1], 
+							bombGrid[(i*GRID_SIZE + j)-1], 
 							bombGrid[(i-1)*GRID_SIZE+j-1],
 							bombGrid[(i-1)*GRID_SIZE+j], 
 							1'b0, 
 							1'b0}),
 						.adjcursor({
 							cursorGrid[(i+1)*GRID_SIZE+j], 
-							cursorGrid[x-1], 
+							cursorGrid[(i*GRID_SIZE + j)-1], 
 							cursorGrid[(i-1)*GRID_SIZE+j], 
 							1'b0}),
-						.cursor(nextCursorGrid[x]),
-						.state(states[(x+1)*STATE_SIZE-1:x*STATE_SIZE])
+						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
+						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
 				end else if(i == GRID_SIZE-1) begin
 					square s_inst(
-						.setbomb(bombGrid[x]),
-						.setreveal(revealGrid[x]),
-						.setcursor(cursorGrid[x]),
+						.setbomb(bombGrid[(i*GRID_SIZE + j)]),
+						.setreveal(revealGrid[(i*GRID_SIZE + j)]),
+						.setcursor(cursorGrid[(i*GRID_SIZE + j)]),
 						.move(move),
 						.dir(dir),
 						.adjbomb({
 							1'b0, 
 							1'b0, 
 							1'b0, 
-							bombGrid[x-1], 
+							bombGrid[(i*GRID_SIZE + j)-1], 
 							bombGrid[(i-1)*GRID_SIZE+j-1],
 							bombGrid[(i-1)*GRID_SIZE+j], 
 							bombGrid[(i-1)*GRID_SIZE+j+1], 
-							bombGrid[x+1]}),
+							bombGrid[(i*GRID_SIZE + j)+1]}),
 						.adjcursor({
 							1'b0, 
-							cursorGrid[x-1], 
+							cursorGrid[(i*GRID_SIZE + j)-1], 
 							cursorGrid[(i-1)*GRID_SIZE+j], 
-							cursorGrid[x+1]}),
-						.cursor(nextCursorGrid[x]),
-						.state(states[(x+1)*STATE_SIZE-1:x*STATE_SIZE])
+							cursorGrid[(i*GRID_SIZE + j)+1]}),
+						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
+						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
 				end else begin
 					square s_inst(
-						.setbomb(bombGrid[x]),
-						.setreveal(revealGrid[x]),
-						.setcursor(cursorGrid[x]),
+						.setbomb(bombGrid[(i*GRID_SIZE + j)]),
+						.setreveal(revealGrid[(i*GRID_SIZE + j)]),
+						.setcursor(cursorGrid[(i*GRID_SIZE + j)]),
 						.move(move),
 						.dir(dir),
 						.adjbomb({
 							bombGrid[(i+1)*GRID_SIZE+j+1], 
 							bombGrid[(i+1)*GRID_SIZE+j], 
 							bombGrid[(i+1)*GRID_SIZE+j-1], 
-							bombGrid[x-1], 
+							bombGrid[(i*GRID_SIZE + j)-1], 
 							bombGrid[(i-1)*GRID_SIZE+j-1],
 							bombGrid[(i-1)*GRID_SIZE+j], 
 							bombGrid[(i-1)*GRID_SIZE+j+1], 
-							bombGrid[x+1]}),
+							bombGrid[(i*GRID_SIZE + j)+1]}),
 						.adjcursor({
 							cursorGrid[(i+1)*GRID_SIZE+j], 
-							cursorGrid[x-1], 
+							cursorGrid[(i*GRID_SIZE + j)-1], 
 							cursorGrid[(i-1)*GRID_SIZE+j], 
-							cursorGrid[x+1]}),
-						.cursor(nextCursorGrid[x]),
-						.state(states[(x+1)*STATE_SIZE-1:x*STATE_SIZE])
+							cursorGrid[(i*GRID_SIZE + j)+1]}),
+						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
+						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
 				end
 			end
@@ -274,7 +271,7 @@ module samplegen(
 	endgenerate
 endmodule
 
-module sampleboard(
+/* module sampleboard(
 	input [8:0] bombGrid,
 	input [8:0] revealGrid,
 	input [8:0] cursorGrid,
@@ -420,7 +417,7 @@ module sampleboard(
 	);
 
 endmodule
-
+ */
 module square(
 	input setbomb, // this square is a bomb
 	input setreveal, // this square should be revealGrids
