@@ -1,4 +1,4 @@
-module board(
+module testboard(	
 	input [8:0] bombGrid,
 	input [8:0] revealGrid,
 	input [8:0] cursorGrid,
@@ -21,9 +21,7 @@ module board(
 	output [2:0] row1,
 	output [2:0] row2,
 	output [2:0] row3
-
 );
-	// example 3x3 board with 2 mines at 0 and 1
 	assign state0 = states[3:0];
 	assign state1 = states[7:4];
 	assign state2 = states[11:8];
@@ -40,11 +38,40 @@ module board(
 	assign row1 = nextCursorGrid[8:6];
 	assign row2 = nextCursorGrid[5:3];
 	assign row3 = nextCursorGrid[2:0];
+	
+	localparam GRID_SIZE = 3;
+	localparam STATE_SIZE = 4;
+	
+	board #(
+		.GRID_SIZE(GRID_SIZE),
+		.STATE_SIZE(STATE_SIZE)
+	) b (
+		.bombGrid(bombGrid),
+		.revealGrid(revealGrid),
+		.cursorGrid(cursorGrid),
+		.move(move),
+		.dir(dir),
+		.states(states),
+		.nextCursorGrid(nextCursorGrid)
+	);
 
+endmodule
+
+module board #(
+	parameter GRID_SIZE = 3,
+	parameter STATE_SIZE = 4
+)(
+	input [GRID_SIZE*GRID_SIZE-1:0] bombGrid,
+	input [GRID_SIZE*GRID_SIZE-1:0] revealGrid,
+	input [GRID_SIZE*GRID_SIZE-1:0] cursorGrid,
+	input move,
+	input [1:0] dir,
+	
+	output [STATE_SIZE*(GRID_SIZE*GRID_SIZE)-1:0] states,
+	output [GRID_SIZE*GRID_SIZE-1:0] nextCursorGrid
+);
 	genvar i;
 	genvar j;
-	parameter GRID_SIZE = 3;
-	parameter STATE_SIZE = 4;
 	generate
 		for (i=0; i < GRID_SIZE; i=i+1) begin
 			for(j=0; j < GRID_SIZE; j=j+1) begin

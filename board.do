@@ -1,7 +1,7 @@
 vlib work
 
 vlog -timescale 1ns/1ns mineboard.v
-vsim board
+vsim testboard
 
 log {/*}
 add wave {/*}
