@@ -127,3 +127,40 @@ module game #(
     end
 	
 endmodule
+
+module key_inputs(
+	input clock,
+	input reset,
+	
+	input PS2_DAT,
+	input PS2_CLK,
+	
+	output reg confirm,
+	output reg restart,
+	output reg [3:0] udlr
+);
+	wire valid, makeBreak;
+	wire [7:0] outCode;
+	
+	keyboard_press_driver kpd(
+		.CLOCK_50(clock),
+		.reset(reset),
+		.valid(valid),
+		.makeBreak(makeBreak),
+		.outCode(outCode)
+	);
+	
+	always @(posedge valid) begin
+		confirm <= 0;
+		restart <= 0;
+		udlr <= 0;
+		case (outCode)
+			8'hE048: udlr <= 4'b1000; // U
+			8'hE04B: udlr <= 4'b0010; // L
+			8'hE050: udlr <= 4'b0100; // D
+			8'hE04D: udlr <= 4'b0001; // R
+			8'h002D: confirm <= 1;// X
+			8'h002C: restart <= 1;// Z
+		endcase
+	end
+endmodule
