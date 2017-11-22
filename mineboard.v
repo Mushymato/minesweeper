@@ -68,7 +68,7 @@ module board #(
 	input [1:0] dir,
 	
 	output [STATE_SIZE*(GRID_SIZE*GRID_SIZE)-1:0] states,
-	output [GRID_SIZE*GRID_SIZE-1:0] nextCursorGrid
+	output reg [GRID_SIZE*GRID_SIZE-1:0] nextCursorGrid
 );
 	genvar i;
 	genvar j;

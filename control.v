@@ -9,16 +9,19 @@ module game #(
 	input restart,
 	input [3:0] udlr,
 	
-	output move,
-	output [1:0] dir,
-	output [GRID_SIZE*GRID_SIZE-1:0] bombGrid,
-	output [GRID_SIZE*GRID_SIZE-1:0] revealGrid,
-	output [GRID_SIZE*GRID_SIZE-1:0] cursorGrid
+	output reg move,
+	output reg [1:0] dir,
+	output reg [GRID_SIZE*GRID_SIZE-1:0] bombGrid,
+	output reg [GRID_SIZE*GRID_SIZE-1:0] revealGrid,
+	output reg [GRID_SIZE*GRID_SIZE-1:0] cursorGrid,
+	output [STATE_SIZE*(GRID_SIZE*GRID_SIZE)-1:0] states
 );
-	board(
+	wire [GRID_SIZE*GRID_SIZE-1:0] nextCursorGrid;
+	
+	board #(
 		.GRID_SIZE(GRID_SIZE),
 		.STATE_SIZE(STATE_SIZE)
-	)b(
+	) b (
 		.bombGrid(bombGrid),
 		.revealGrid(revealGrid),
 		.cursorGrid(cursorGrid),
@@ -33,9 +36,10 @@ module game #(
 	localparam	S_INIT		= 4'b0000,
 				S_GAME		= 4'b0001,
 				S_MOVE		= 4'b0010,
-				S_REVEAL	= 4'b0011,
-				S_WIN		= 4'b0100,
-				S_LOSE		= 4'b0101;
+				S_MOVE_SET	= 4'b0011,
+				S_REVEAL	= 4'b0100,
+				S_WIN		= 4'b0101,
+				S_LOSE		= 4'b0110;
 
 	always @(*) begin: state_table
 		case(c_state)
@@ -47,61 +51,72 @@ module game #(
 					n_state = S_LOSE;
 				end else if(confirm) begin
 					n_state = S_REVEAL;
-				end else if(|uldr) begin
+				end else if(|udlr) begin
 					n_state = S_MOVE;
 				end else begin
 					n_state = S_GAME;
 				end
 			end
-			S_MOVE: n_state = |uldr ? S_MOVE : S_GAME;
+			S_MOVE: n_state = |udlr ? S_MOVE : S_MOVE_SET;
+			S_MOVE_SET: n_state = S_GAME;
 			S_REVEAL: n_state = confirm ? S_REVEAL : S_GAME;
 			S_WIN: n_state = restart ? S_INIT : S_WIN;
-			S_LOSE: n_state = restart ? S_INIT : S_WIN;
+			S_LOSE: n_state = restart ? S_INIT : S_LOSE;
 		endcase
 	end
 	
-	integer i;	
+	integer i;
+	reg [GRID_SIZE*GRID_SIZE-1:0] tmpNext;
+	
 	always@(posedge clock)
     begin: state_FFs
         if(!reset) begin
             c_state <= S_INIT;
+			move <= 0;
+			dir <= 0;
+			wl <= 0;
 			bombGrid <= 0;
 			revealGrid <= 0;
 			cursorGrid <= 0;
+			tmpNext <= 0;
         end else begin
 			case(c_state)
 				S_INIT: begin
+					move <= 0;
+					dir <= 0;
+					wl <= 0;
+					bombGrid <= 0;
+					revealGrid <= 0;
+					cursorGrid <= 0;
+					tmpNext <= 0;
 					bombGrid[8] <= 1'b1;
-					bombGrid[17] <= 1'b1;
-					bombGrid[26] <= 1'b1;
-					bombGrid[35] <= 1'b1;
-					bombGrid[44] <= 1'b1;
-					bombGrid[53] <= 1'b1;
-					bombGrid[62] <= 1'b1;
-					bombGrid[71] <= 1'b1;
-					
+					bombGrid[5] <= 1'b1;
 					cursorGrid[0] <= 1'b1;
 				end
 				S_GAME: begin
 					if(bombGrid == ~revealGrid) begin
-						wl <= 2'b01
+						wl <= 2'b01;
 					end else begin
 						for(i=0; i < GRID_SIZE * GRID_SIZE; i=i+1) begin
 							if(bombGrid[i] == 1'b1 && revealGrid[i] == 1'b1) begin
-								wl <= 2'b10
+								wl <= 2'b10;
 							end
 						end
 					end
 				end
 				S_MOVE: begin
 					move <= 1'b1;
-					case (udlr):
+					case (udlr)
 						4'b0001: dir <= 2'b00; // Right
 						4'b0010: dir <= 2'b10; // Left
 						4'b0100: dir <= 2'b11; // Down
-						4'b1000: dir <= 2'b01; // UP
+						4'b1000: dir <= 2'b01; // Up
 						default: move <= 1'b0;
 					endcase
+					tmpNext <= nextCursorGrid;
+				end
+				S_MOVE_SET: begin
+					cursorGrid <= tmpNext;
 				end
 				S_REVEAL: begin
 					revealGrid <= revealGrid | cursorGrid;
@@ -110,6 +125,5 @@ module game #(
             c_state <= n_state;
 		end
     end
-	
 	
 endmodule
