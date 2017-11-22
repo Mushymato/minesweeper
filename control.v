@@ -9,15 +9,15 @@ module game #(
 	input restart,
 	input [3:0] udlr,
 	
-	output reg move,
-	output reg [1:0] dir,
+	output reg [1:0] wl,
 	output reg [GRID_SIZE*GRID_SIZE-1:0] bombGrid,
 	output reg [GRID_SIZE*GRID_SIZE-1:0] revealGrid,
 	output reg [GRID_SIZE*GRID_SIZE-1:0] cursorGrid,
 	output [STATE_SIZE*(GRID_SIZE*GRID_SIZE)-1:0] states
 );
 	wire [GRID_SIZE*GRID_SIZE-1:0] nextCursorGrid;
-	
+	reg move;
+	reg [1:0] dir;
 	board #(
 		.GRID_SIZE(GRID_SIZE),
 		.STATE_SIZE(STATE_SIZE)
@@ -32,7 +32,6 @@ module game #(
 	);
 	
 	reg [3:0] c_state, n_state;
-	reg [1:0]wl;
 	localparam	S_INIT		= 4'b0000,
 				S_GAME		= 4'b0001,
 				S_MOVE		= 4'b0010,
@@ -129,7 +128,7 @@ module game #(
 endmodule
 
 module key_inputs(
-	input clock,
+	input CLOCK_50,
 	input reset,
 	
 	input PS2_DAT,
@@ -143,7 +142,7 @@ module key_inputs(
 	wire [7:0] outCode;
 	
 	keyboard_press_driver kpd(
-		.CLOCK_50(clock),
+		.CLOCK_50(CLOCK_50),
 		.reset(reset),
 		.valid(valid),
 		.makeBreak(makeBreak),
