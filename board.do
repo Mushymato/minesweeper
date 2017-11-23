@@ -8,7 +8,7 @@ add wave {/*}
 
 force {bombGrid} 100010000
 force {revealGrid} 000000000
-force {cursorGrid} 000010000
+force {cursorGrid} 000100000
 force {move} 0
 force {dir} 00
 run 4ns

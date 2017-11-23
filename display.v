@@ -2,7 +2,7 @@ module display (
 	input clock,
 	input GRID_SIZE,
 
-	output reg writeEn,
+	output reg writeEn
 
 );
 endmodule
@@ -46,6 +46,7 @@ module drawEmptyBoard (
 				i = 0;
 				n_state = S_DRAW_BOX;
 			end
+		endcase
 	end
 
 	always @(*) 
@@ -72,9 +73,9 @@ module drawBox (
 
 	reg [1:0] c_state, n_state;
 	localparam	S_DRAW_LINE		= 2'b00,
-				S_DRAW_LR		= 2'b01,
+				S_DRAW_LR		= 2'b01;
 
-	always @(posedge clk) begin
+	always @(posedge clock) begin
 		if (row == 6'd0 | row == 6'd7) begin
 			if (column < 7'd8) begin
 				x <= cur_x + column;

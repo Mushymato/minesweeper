@@ -3,6 +3,7 @@ module test(
 	input [3:0] KEY,
 	input CLOCK_50,
 	output [9:0] LEDR,
+	output [6:0] HEX0,
 	output [6:0] HEX1);
 
 	wire [8:0] bombGrid;
@@ -10,38 +11,52 @@ module test(
 	wire [8:0] cursorGrid;
 	wire [35:0] states;
 	wire [1:0] wl;
+	wire [3:0] cs;
 	
 	game g(
 		.clock(CLOCK_50),
 		.reset(KEY[0]),
 		.confirm(~KEY[1]),
 		.restart(~KEY[2]),
-		.udlr(SW[0:3]),
+		.readkey(~KEY[3]),
+		.udlr(SW[3:0]),
 		.wl(wl),
 		.bombGrid(bombGrid),
 		.revealGrid(revealGrid),
 		.cursorGrid(cursorGrid),
-		.states(states)
+		.states(states),
+		.cs(cs)
 	);
 	
 	reg [3:0] cState;
-	integer i;
 	always @(*) begin
-		cState <= 0;
-		for(i=0; i < 8; i=i+1) begin
-			if(cursorGrid[i] == 1'b1) begin
-				cState <= states[(i+1)*4-1:i*4];
-			end
-		end
+		case(cursorGrid)
+			9'b100000000: cState <= states[35:32];
+			9'b010000000: cState <= states[31:28];
+			9'b001000000: cState <= states[27:24];
+			9'b000100000: cState <= states[23:20];
+			9'b000010000: cState <= states[19:16];
+			9'b000001000: cState <= states[15:12];
+			9'b000000100: cState <= states[11:8];
+			9'b000000010: cState <= states[7:4];
+			9'b000000001: cState <= states[3:0];
+			default: cState <= 0;
+		endcase
 	end
+		
+	assign LEDR[8:0] = cursorGrid;
+	assign LEDR[9] = |wl;
 	
-	assign LEDR[8:0] <= bombGrid;
-	assign LEDR[9] <= |wl;
-	
-	hexDisplay h(
+	hexDisplay h0(
+		.X(cs),
+		.Hex(HEX0)
+	);
+
+	hexDisplay h1(
 		.X(cState),
 		.Hex(HEX1)
-	)
+	);
+	
 	
 endmodule
 

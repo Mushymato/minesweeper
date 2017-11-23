@@ -7,13 +7,16 @@ module game #(
 	
 	input confirm,
 	input restart,
+	input readkey,
 	input [3:0] udlr,
 	
 	output reg [1:0] wl,
 	output reg [GRID_SIZE*GRID_SIZE-1:0] bombGrid,
 	output reg [GRID_SIZE*GRID_SIZE-1:0] revealGrid,
 	output reg [GRID_SIZE*GRID_SIZE-1:0] cursorGrid,
-	output [STATE_SIZE*(GRID_SIZE*GRID_SIZE)-1:0] states
+	output [STATE_SIZE*(GRID_SIZE*GRID_SIZE)-1:0] states,
+	
+	output [3:0] cs
 );
 	wire [GRID_SIZE*GRID_SIZE-1:0] nextCursorGrid;
 	reg move;
@@ -40,6 +43,8 @@ module game #(
 				S_WIN		= 4'b0101,
 				S_LOSE		= 4'b0110;
 
+	assign cs = c_state;
+				
 	always @(*) begin: state_table
 		case(c_state)
 			S_INIT: n_state = restart ? S_INIT : S_GAME;
@@ -50,17 +55,18 @@ module game #(
 					n_state = S_LOSE;
 				end else if(confirm) begin
 					n_state = S_REVEAL;
-				end else if(|udlr) begin
+				end else if(readkey) begin
 					n_state = S_MOVE;
 				end else begin
 					n_state = S_GAME;
 				end
 			end
-			S_MOVE: n_state = |udlr ? S_MOVE : S_MOVE_SET;
+			S_MOVE: n_state = readkey ? S_MOVE : S_MOVE_SET;
 			S_MOVE_SET: n_state = S_GAME;
 			S_REVEAL: n_state = confirm ? S_REVEAL : S_GAME;
 			S_WIN: n_state = restart ? S_INIT : S_WIN;
 			S_LOSE: n_state = restart ? S_INIT : S_LOSE;
+			default: n_state = S_GAME;
 		endcase
 	end
 	
@@ -70,7 +76,7 @@ module game #(
 	always@(posedge clock)
     begin: state_FFs
         if(!reset) begin
-            c_state <= S_INIT;
+			c_state <= S_INIT;
 			move <= 0;
 			dir <= 0;
 			wl <= 0;
@@ -81,13 +87,6 @@ module game #(
         end else begin
 			case(c_state)
 				S_INIT: begin
-					move <= 0;
-					dir <= 0;
-					wl <= 0;
-					bombGrid <= 0;
-					revealGrid <= 0;
-					cursorGrid <= 0;
-					tmpNext <= 0;
 					bombGrid[8] <= 1'b1;
 					bombGrid[5] <= 1'b1;
 					cursorGrid[0] <= 1'b1;
@@ -120,8 +119,17 @@ module game #(
 				S_REVEAL: begin
 					revealGrid <= revealGrid | cursorGrid;
 				end
+				default: begin
+					move <= 0;
+					dir <= 0;
+					wl <= 0;
+					bombGrid <= 0;
+					revealGrid <= 0;
+					cursorGrid <= 0;
+					tmpNext <= 0;
+				end
 			endcase
-            c_state <= n_state;
+         c_state <= n_state;
 		end
     end
 	
