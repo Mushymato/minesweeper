@@ -10,11 +10,17 @@ module game #(
 	input readkey,
 	input [3:0] udlr,
 	
+	input drawdone,
+	
 	output reg [1:0] wl,
 	output reg [GRID_SIZE*GRID_SIZE-1:0] bombGrid,
 	output reg [GRID_SIZE*GRID_SIZE-1:0] revealGrid,
 	output reg [GRID_SIZE*GRID_SIZE-1:0] cursorGrid,
 	output [STATE_SIZE*(GRID_SIZE*GRID_SIZE)-1:0] states,
+	
+	output reg d_enable,
+	output reg d_cursor,
+	output reg d_reveal,
 	
 	output [3:0] cs
 );
@@ -36,10 +42,11 @@ module game #(
 	);
 	
 	wire [7:0] random;
+	reg [3:0] x, y;
 	integer bombcount;
 	fibonacci_lfsr_nbit f (
-		.clk(clock),
-		.rst_n(reset),
+		.clock(clock),
+		.reset(reset),
 		.data(random)
 	);
 	
@@ -90,31 +97,35 @@ module game #(
 			c_state <= S_INIT;
 			move <= 0;
 			dir <= 0;
-			init <= 0;
 			wl <= 0;
 			bombGrid <= 0;
 			revealGrid <= 0;
 			cursorGrid <= 0;
 			tmpNext <= 0;
+			d_enable <= 0;
+			x <= 0;
+			y <= 0;
         end else begin
+			d_enable <= 1'b0;
+			d_cursor <= 1'b0;
+			d_reveal <= 1'b0;
 			case(c_state)
 				S_INIT: begin
 					cursorGrid[0] <= 1'b0;
-					bombcount <= 9;
+					bombcount <= GRID_SIZE;
 				end
 				S_SET_BOMB: begin
 					// x: random[3:0]
 					// y: random[7:4]
-					if(random[3:0] > 4'b1001) begin
-						random[3:0] = random[3:0] >> 1'b1;
-					end
-					if(random[7:4] > 4'b1001) begin
-						random[7:4] = random[7:4] >> 1'b1;
-					end
-					bombGrid[random[3:0]*GRID_SIZE + random[7:4]] = 1'b1;
+					
+					x <= (random[3:0] > 4'b1001) ? x <= random[3:0] >> 1'b1 : x <= random[3:0];
+					y <= (random[7:4] > 4'b1001) ? y <= random[7:4] >> 1'b1 : y <= random[7:4];
+					
+					bombGrid[x*GRID_SIZE + y] = 1'b1;
 					bombcount = bombcount - 1;
 				end
 				S_GAME: begin
+					d_enable <= 1'b1;
 					if(bombGrid == ~revealGrid) begin
 						wl <= 2'b01;
 					end else begin
@@ -138,9 +149,13 @@ module game #(
 				end
 				S_MOVE_SET: begin
 					cursorGrid <= tmpNext;
+					d_enable <= 1'b1;
+					d_cursor <= 1'b1;
 				end
 				S_REVEAL: begin
 					revealGrid <= revealGrid | cursorGrid;
+					d_enable <= 1'b1;
+					d_reveal <= 1'b1;
 				end
 				default: begin
 					move <= 0;
@@ -187,12 +202,12 @@ module key_inputs(
 			restart <= 0;
 			udlr <= 0;
 		end else if(valid && makeBreak) begin
-			if(outCode == 8'bE0) begin
+			if(outCode == 8'hE0) begin
 				df <= 1'b1;
 			end else begin
 				confirm <= 0;
 				restart <= 0;
-				udlr <= 0;
+				udlr <= 4'b0;
 				case(outCode)
 					8'h22: confirm <= df ? 1'b0 : 1'b1; //x
 					8'h35: restart <= df ? 1'b0 : 1'b1; //y
