@@ -19,7 +19,7 @@ else if(clk)
     meta2 <= meta1;
   end
 
-assign stage[1] = ~&{stage[2] ^ stage[1],stop};
+assign stage[1] = ~&{stage[2] ^ stage[1], stop};
 assign stage[2] = !stage[3];
 assign stage[3] = !stage[4] ^ stage[1];
 assign stage[4] = !stage[5] ^ stage[1];

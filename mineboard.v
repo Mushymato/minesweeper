@@ -94,9 +94,10 @@ module board #(
 							bombGrid[(i*GRID_SIZE + j)+1]}),
 						.adjcursor({
 							cursorGrid[(i+1)*GRID_SIZE+j], 
-							1'bz, 
-							1'bz, 
+							1'b0, 
+							1'b0, 
 							cursorGrid[(i*GRID_SIZE + j)+1]}),
+						.adjwall({1'b0, 1'b1, 1'b1, 1'b0}),
 						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
 						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
@@ -120,8 +121,9 @@ module board #(
 						.adjcursor({
 							cursorGrid[(i+1)*GRID_SIZE+j], 
 							cursorGrid[(i*GRID_SIZE + j)-1], 
-							1'bz,
-							1'bz}),
+							1'b0,
+							1'b0}),
+						.adjwall({1'b0, 1'b0, 1'b1, 1'b1}),
 						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
 						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
@@ -144,10 +146,11 @@ module board #(
 							bombGrid[(i-1)*GRID_SIZE+j+1], 
 							bombGrid[(i*GRID_SIZE + j)+1]}),
 						.adjcursor({
-							1'bz, 
-							1'bz, 
+							1'b0, 
+							1'b0, 
 							cursorGrid[(i-1)*GRID_SIZE+j], 
 							cursorGrid[(i*GRID_SIZE + j)+1]}),
+						.adjwall({1'b1, 1'b1, 1'b0, 1'b0}),
 						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
 						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
@@ -169,10 +172,11 @@ module board #(
 							1'b0, 
 							1'b0}),
 						.adjcursor({
-							1'bz, 
+							1'b0, 
 							cursorGrid[(i*GRID_SIZE + j)-1], 
 							cursorGrid[(i-1)*GRID_SIZE+j], 
-							1'bz}),
+							1'b0}),
+						.adjwall({1'b1, 1'b0, 1'b0, 1'b1}),
 						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
 						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
@@ -196,8 +200,9 @@ module board #(
 						.adjcursor({
 							cursorGrid[(i+1)*GRID_SIZE+j], 
 							cursorGrid[(i*GRID_SIZE + j)-1], 
-							1'bz, 
+							1'b1, 
 							cursorGrid[(i*GRID_SIZE + j)+1]}),
+						.adjwall({1'b0, 1'b0, 1'b1, 1'b0}),
 						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
 						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
@@ -220,9 +225,10 @@ module board #(
 							bombGrid[(i*GRID_SIZE + j)+1]}),
 						.adjcursor({
 							cursorGrid[(i+1)*GRID_SIZE+j], 
-							1'bz, 
+							1'b0, 
 							cursorGrid[(i-1)*GRID_SIZE+j], 
 							cursorGrid[(i*GRID_SIZE + j)+1]}),
+						.adjwall({1'b0, 1'b1, 1'b0, 1'b0}),
 						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
 						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
@@ -247,7 +253,8 @@ module board #(
 							cursorGrid[(i+1)*GRID_SIZE+j], 
 							cursorGrid[(i*GRID_SIZE + j)-1], 
 							cursorGrid[(i-1)*GRID_SIZE+j], 
-							1'bz}),
+							1'b0}),
+						.adjwall({1'b0, 1'b0, 1'b0, 1'b1}),
 						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
 						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
@@ -269,10 +276,11 @@ module board #(
 							bombGrid[(i-1)*GRID_SIZE+j+1], 
 							bombGrid[(i*GRID_SIZE + j)+1]}),
 						.adjcursor({
-							1'bz, 
+							1'b0, 
 							cursorGrid[(i*GRID_SIZE + j)-1], 
 							cursorGrid[(i-1)*GRID_SIZE+j], 
 							cursorGrid[(i*GRID_SIZE + j)+1]}),
+						.adjwall({1'b1, 1'b0, 1'b0, 1'b0}),
 						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
 						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
@@ -298,6 +306,7 @@ module board #(
 							cursorGrid[(i*GRID_SIZE + j)-1], 
 							cursorGrid[(i-1)*GRID_SIZE+j], 
 							cursorGrid[(i*GRID_SIZE + j)+1]}),
+						.adjwall({1'b0, 1'b0, 1'b0, 1'b0}),
 						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),
 						.state(states[((i*GRID_SIZE + j)+1)*STATE_SIZE-1:(i*GRID_SIZE + j)*STATE_SIZE])
 					);
@@ -317,7 +326,7 @@ module square(
 	
 	input [7:0] adjbomb, // bomb/not bomb for 8 adjacent squares
 	input [3:0] adjcursor, // is cursor/is not cursor for 4 adjacent squares
-	input [3:0] adjwalls, // is adjacent squares walls?
+	input [3:0] adjwall, // is adjacent squares walls?
 	
 	output reg cursor, // next state of cursor
 	output reg [3:0] state // state of this square, 0-9 where 9 is bomb
@@ -344,9 +353,7 @@ module square(
 		state = setbomb ? 4'd9 : adjbomb[7] + adjbomb[6] + adjbomb[5] + adjbomb[4] + adjbomb[3] + adjbomb[2] + adjbomb[1] + adjbomb[0];
 		cursor = setcursor;
 		if (move) begin
-			if(adjwalls[op] === 1'b1 && cursor == 1'b1) begin
-				cursor = cursor;
-			end else begin
+			if (~(adjwall[op] && cursor)) begin
 				cursor = adjcursor[dir];
 			end
 			// 00 copy from left (move right)

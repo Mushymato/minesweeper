@@ -21,6 +21,7 @@ module game #(
 	wire [GRID_SIZE*GRID_SIZE-1:0] nextCursorGrid;
 	reg move;
 	reg [1:0] dir;
+	
 	board #(
 		.GRID_SIZE(GRID_SIZE),
 		.STATE_SIZE(STATE_SIZE)
@@ -34,20 +35,30 @@ module game #(
 		.nextCursorGrid(nextCursorGrid)
 	);
 	
+	wire [7:0] random;
+	integer bombcount;
+	fibonacci_lfsr_nbit f (
+		.clk(clock),
+		.rst_n(reset),
+		.data(random)
+	);
+	
 	reg [3:0] c_state, n_state;
 	localparam	S_INIT		= 4'b0000,
-				S_GAME		= 4'b0001,
-				S_MOVE		= 4'b0010,
-				S_MOVE_SET	= 4'b0011,
-				S_REVEAL	= 4'b0100,
-				S_WIN		= 4'b0101,
-				S_LOSE		= 4'b0110;
+				S_SET_BOMB	= 4'b0001,
+				S_GAME		= 4'b0010,
+				S_MOVE		= 4'b0011,
+				S_MOVE_SET	= 4'b0100,
+				S_REVEAL	= 4'b0101,
+				S_WIN		= 4'b0110,
+				S_LOSE		= 4'b0111;
 
 	assign cs = c_state;
 				
 	always @(*) begin: state_table
 		case(c_state)
-			S_INIT: n_state = restart ? S_INIT : S_GAME;
+			S_INIT: n_state = restart ? S_INIT : S_SET_BOMB;
+			S_SET_BOMB: n_state = bombcount == 0 ? S_GAME : S_SET_BOMB;
 			S_GAME: begin
 				if(wl == 2'b01) begin
 					n_state = S_WIN;
@@ -79,6 +90,7 @@ module game #(
 			c_state <= S_INIT;
 			move <= 0;
 			dir <= 0;
+			init <= 0;
 			wl <= 0;
 			bombGrid <= 0;
 			revealGrid <= 0;
@@ -87,9 +99,20 @@ module game #(
         end else begin
 			case(c_state)
 				S_INIT: begin
-					bombGrid[8] <= 1'b1;
-					bombGrid[5] <= 1'b1;
-					cursorGrid[0] <= 1'b1;
+					cursorGrid[0] <= 1'b0;
+					bombcount <= 9;
+				end
+				S_SET_BOMB: begin
+					// x: random[3:0]
+					// y: random[7:4]
+					if(random[3:0] > 4'b1001) begin
+						random[3:0] = random[3:0] >> 1'b1;
+					end
+					if(random[7:4] > 4'b1001) begin
+						random[7:4] = random[7:4] >> 1'b1;
+					end
+					bombGrid[random[3:0]*GRID_SIZE + random[7:4]] = 1'b1;
+					bombcount = bombcount - 1;
 				end
 				S_GAME: begin
 					if(bombGrid == ~revealGrid) begin
@@ -148,6 +171,7 @@ module key_inputs(
 );
 	wire valid, makeBreak;
 	wire [7:0] outCode;
+	reg df; // direction key (2 bits) or function key (1 bit)
 	
 	keyboard_press_driver kpd(
 		.CLOCK_50(CLOCK_50),
@@ -157,17 +181,28 @@ module key_inputs(
 		.outCode(outCode)
 	);
 	
-	always @(posedge valid) begin
-		confirm <= 0;
-		restart <= 0;
-		udlr <= 0;
-		case (outCode)
-			8'hE048: udlr <= 4'b1000; // U
-			8'hE04B: udlr <= 4'b0010; // L
-			8'hE050: udlr <= 4'b0100; // D
-			8'hE04D: udlr <= 4'b0001; // R
-			8'h002D: confirm <= 1;// X
-			8'h002C: restart <= 1;// Z
-		endcase
+	always @(posedge CLOCK_50) begin
+		if(!reset) begin
+			confirm <= 0;
+			restart <= 0;
+			udlr <= 0;
+		end else if(valid && makeBreak) begin
+			if(outCode == 8'bE0) begin
+				df <= 1'b1;
+			end else begin
+				confirm <= 0;
+				restart <= 0;
+				udlr <= 0;
+				case(outCode)
+					8'h22: confirm <= df ? 1'b0 : 1'b1; //x
+					8'h35: restart <= df ? 1'b0 : 1'b1; //y
+					8'h75: udlr <= df ? 4'b1000 : 4'b0000; //up
+					8'h6B: udlr <= df ? 4'b0010 : 4'b0000; //left
+					8'h72: udlr <= df ? 4'b0100 : 4'b0000; //down
+					8'h74: udlr <= df ? 4'b0001 : 4'b0000; //right
+				endcase
+				df <= 1'b0;
+			end
+		end
 	end
 endmodule
