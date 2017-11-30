@@ -10,8 +10,6 @@ module game #(
 	input readkey,
 	input [3:0] udlr,
 	
-	input drawdone,
-	
 	output reg [1:0] wl,
 	output reg [GRID_SIZE*GRID_SIZE-1:0] bombGrid,
 	output reg [GRID_SIZE*GRID_SIZE-1:0] revealGrid,
@@ -41,14 +39,14 @@ module game #(
 		.nextCursorGrid(nextCursorGrid)
 	);
 	
-	wire [7:0] random;
-	reg [3:0] x, y;
-	integer bombcount;
-	fibonacci_lfsr_nbit f (
-		.clock(clock),
-		.reset(reset),
-		.data(random)
-	);
+	// wire [7:0] random;
+	// reg [3:0] x, y;
+	// integer bombcount;
+	// fibonacci_lfsr_nbit f (
+	// 	.clock(clock),
+	// 	.reset(reset),
+	// 	.data(random)
+	// );
 	
 	reg [3:0] c_state, n_state;
 	localparam	S_INIT		= 4'b0000,
@@ -64,8 +62,9 @@ module game #(
 				
 	always @(*) begin: state_table
 		case(c_state)
-			S_INIT: n_state = restart ? S_INIT : S_SET_BOMB;
-			S_SET_BOMB: n_state = bombcount == 0 ? S_GAME : S_SET_BOMB;
+			S_INIT: n_state = restart ? S_INIT : S_GAME;
+			// S_INIT: n_state = restart ? S_INIT : S_SET_BOMB;
+			// S_SET_BOMB: n_state = bombcount == 0 ? S_GAME : S_SET_BOMB;
 			S_GAME: begin
 				if(wl == 2'b01) begin
 					n_state = S_WIN;
@@ -103,8 +102,8 @@ module game #(
 			cursorGrid <= 0;
 			tmpNext <= 0;
 			d_enable <= 0;
-			x <= 0;
-			y <= 0;
+			//x <= 0;
+			//y <= 0;
         end else begin
 			d_enable <= 1'b0;
 			d_cursor <= 1'b0;
@@ -112,18 +111,19 @@ module game #(
 			case(c_state)
 				S_INIT: begin
 					cursorGrid[0] <= 1'b0;
-					bombcount <= GRID_SIZE;
+					bombGrid <= 9'b10010000;
+					// bombcount <= GRID_SIZE;
 				end
-				S_SET_BOMB: begin
-					// x: random[3:0]
-					// y: random[7:4]
+				// S_SET_BOMB: begin
+				// 	// x: random[3:0]
+				// 	// y: random[7:4]
 					
-					x <= (random[3:0] > 4'b1001) ? x <= random[3:0] >> 1'b1 : x <= random[3:0];
-					y <= (random[7:4] > 4'b1001) ? y <= random[7:4] >> 1'b1 : y <= random[7:4];
+				// 	x <= (random[3:0] > 4'b1001) ? x <= random[3:0] >> 1'b1 : x <= random[3:0];
+				// 	y <= (random[7:4] > 4'b1001) ? y <= random[7:4] >> 1'b1 : y <= random[7:4];
 					
-					bombGrid[x*GRID_SIZE + y] = 1'b1;
-					bombcount = bombcount - 1;
-				end
+				// 	bombGrid[x*GRID_SIZE + y] = 1'b1;
+				// 	bombcount = bombcount - 1;
+				// end
 				S_GAME: begin
 					d_enable <= 1'b1;
 					if(bombGrid == ~revealGrid) begin
@@ -171,53 +171,4 @@ module game #(
 		end
     end
 	
-endmodule
-
-module key_inputs(
-	input CLOCK_50,
-	input reset,
-	
-	input PS2_DAT,
-	input PS2_CLK,
-	
-	output reg confirm,
-	output reg restart,
-	output reg [3:0] udlr
-);
-	wire valid, makeBreak;
-	wire [7:0] outCode;
-	reg df; // direction key (2 bits) or function key (1 bit)
-	
-	keyboard_press_driver kpd(
-		.CLOCK_50(CLOCK_50),
-		.reset(reset),
-		.valid(valid),
-		.makeBreak(makeBreak),
-		.outCode(outCode)
-	);
-	
-	always @(posedge CLOCK_50) begin
-		if(!reset) begin
-			confirm <= 0;
-			restart <= 0;
-			udlr <= 0;
-		end else if(valid && makeBreak) begin
-			if(outCode == 8'hE0) begin
-				df <= 1'b1;
-			end else begin
-				confirm <= 0;
-				restart <= 0;
-				udlr <= 4'b0;
-				case(outCode)
-					8'h22: confirm <= df ? 1'b0 : 1'b1; //x
-					8'h35: restart <= df ? 1'b0 : 1'b1; //y
-					8'h75: udlr <= df ? 4'b1000 : 4'b0000; //up
-					8'h6B: udlr <= df ? 4'b0010 : 4'b0000; //left
-					8'h72: udlr <= df ? 4'b0100 : 4'b0000; //down
-					8'h74: udlr <= df ? 4'b0001 : 4'b0000; //right
-				endcase
-				df <= 1'b0;
-			end
-		end
-	end
 endmodule
