@@ -200,7 +200,7 @@ module board #(
 						.adjcursor({
 							cursorGrid[(i+1)*GRID_SIZE+j], 
 							cursorGrid[(i*GRID_SIZE + j)-1], 
-							1'b1, 
+							1'b0, 
 							cursorGrid[(i*GRID_SIZE + j)+1]}),
 						.adjwall({1'b0, 1'b0, 1'b1, 1'b0}),
 						.cursor(nextCursorGrid[(i*GRID_SIZE + j)]),

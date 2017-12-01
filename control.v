@@ -81,11 +81,10 @@ module game #(
 			S_REVEAL: n_state = confirm ? S_REVEAL : S_GAME;
 			S_WIN: n_state = restart ? S_INIT : S_WIN;
 			S_LOSE: n_state = restart ? S_INIT : S_LOSE;
-			default: n_state = S_GAME;
+			default: n_state = S_INIT;
 		endcase
 	end
 	
-	integer i;
 	reg [GRID_SIZE*GRID_SIZE-1:0] tmpNext;
 	
 	always@(posedge clock)
@@ -106,8 +105,8 @@ module game #(
 			d_enable <= 1'b0;
 			case(c_state)
 				S_INIT: begin
-					cursorGrid[0] <= 1'b0;
-					bombGrid <= 9'b10010000;
+					cursorGrid[0] <= 1'b1;
+					bombGrid <= 9'b110000000;
 					// bombcount <= GRID_SIZE;
 				end
 				// S_SET_BOMB: begin
@@ -123,12 +122,8 @@ module game #(
 				S_GAME: begin
 					if(bombGrid == ~revealGrid) begin
 						wl <= 2'b01;
-					end else begin
-						for(i=0; i < GRID_SIZE * GRID_SIZE; i=i+1) begin
-							if(bombGrid[i] == 1'b1 && revealGrid[i] == 1'b1) begin
-								wl <= 2'b10;
-							end
-						end
+					end else if(|(bombGrid & revealGrid)) begin
+						wl <= 2'b10;
 					end
 				end
 				S_MOVE: begin
