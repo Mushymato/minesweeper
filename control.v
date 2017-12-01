@@ -17,8 +17,6 @@ module game #(
 	output [STATE_SIZE*(GRID_SIZE*GRID_SIZE)-1:0] states,
 	
 	output reg d_enable,
-	output reg d_cursor,
-	output reg d_reveal,
 	
 	output [3:0] cs
 );
@@ -106,8 +104,6 @@ module game #(
 			//y <= 0;
         end else begin
 			d_enable <= 1'b0;
-			d_cursor <= 1'b0;
-			d_reveal <= 1'b0;
 			case(c_state)
 				S_INIT: begin
 					cursorGrid[0] <= 1'b0;
@@ -125,7 +121,6 @@ module game #(
 				// 	bombcount = bombcount - 1;
 				// end
 				S_GAME: begin
-					d_enable <= 1'b1;
 					if(bombGrid == ~revealGrid) begin
 						wl <= 2'b01;
 					end else begin
@@ -150,12 +145,10 @@ module game #(
 				S_MOVE_SET: begin
 					cursorGrid <= tmpNext;
 					d_enable <= 1'b1;
-					d_cursor <= 1'b1;
 				end
 				S_REVEAL: begin
 					revealGrid <= revealGrid | cursorGrid;
 					d_enable <= 1'b1;
-					d_reveal <= 1'b1;
 				end
 				default: begin
 					move <= 0;
