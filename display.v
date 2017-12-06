@@ -4,7 +4,7 @@ module display #(
 	parameter STATE_SIZE = 4
 )(
 	input clock,
-	input resetn,
+	input reset,
 	input d_cursor,
 	input d_reveal,
 	input [GRID_SIZE*GRID_SIZE-1:0] bombGrid,
@@ -29,7 +29,7 @@ module display #(
 	wire plotEn;
 		
   	/*vga_adapter VGA(
-			.resetn(resetn),
+			.reset(reset),
 			.clock(clock),
 			.colour(colour),
 			.x(x),
@@ -69,7 +69,7 @@ module display #(
 		.clock(clock),
 		.d_cursor(d_cursor),
 		.d_reveal(d_reveal),
-		.resetn(resetn),
+		.reset(reset),
 		.box_x(4'd1),
 		.box_y(4'd1),
 		.cursor_bit(cursorGrid[8]),
@@ -90,10 +90,10 @@ module drawBoard#(
 	parameter STATE_SIZE = 4
 )(
 	input clock,	
-	input resetn,
+	input reset,
 	
 	input d_enable,
-		
+	
 	input [GRID_SIZE*GRID_SIZE-1:0] bombGrid,
 	input [GRID_SIZE*GRID_SIZE-1:0] revealGrid,
 	input [GRID_SIZE*GRID_SIZE-1:0] cursorGrid,
@@ -102,19 +102,17 @@ module drawBoard#(
 	output reg [7:0] x_out,
 	output reg [6:0] y_out,
 	output reg [2:0] colour,
-	output reg plotEn,
-	
-	output [3:0] cs
+	output reg plotEn
 );
 	reg [GRID_BIT-1:0] c_x, c_y;
 	wire [GRID_BIT*2-1:0] c_k;
 	assign c_k = (GRID_SIZE-c_x-1) + (GRID_SIZE-c_y-1) * GRID_SIZE;
 	
-	wire c_cursor, c_reveal;
+	/* wire c_cursor, c_reveal;
 	wire [STATE_SIZE-1: 0] c_st;
 	assign c_cursor = cursorGrid[c_k];
 	assign c_reveal = revealGrid[c_k];
-	assign c_st = states[c_k*STATE_SIZE +: STATE_SIZE];
+	assign c_st = states[c_k*STATE_SIZE +: STATE_SIZE];*/
 	
 	reg [3:0] x_shift, y_shift;
 	reg [1:0] drawn; // how much is drawn? 0: nothing, 1: border, 2: border and cell
@@ -122,24 +120,22 @@ module drawBoard#(
 	reg [48:0] bitmap;
 	
 	always @(*) begin
-		case(states[c_k*STATE_SIZE +: STATE_SIZE-1])
-			4'd0: bitmap = 49'b0011100010001001100100101010010011001000100011100;
-			4'd1: bitmap = 49'b0111110000100000010000001000000101000011000001000;
-			4'd2: bitmap = 49'b0111110000010000010000010000010000001000100011100;
-			4'd3: bitmap = 49'b0011100010001001000000011000010000001000100011100;
-			4'd4: bitmap = 49'b0010000001000001111100010010001010000110000010000;
-			4'd5: bitmap = 49'b0011100010001001000000011100000001000000100111110;
-			4'd6: bitmap = 49'b0011100010001001000100011110000001000000100011100;
-			4'd7: bitmap = 49'b0001000000100000010000010000001000001000000111110;
-			4'd8: bitmap = 49'b0011100010001001000100011100010001001000100011100;
-			4'd9: bitmap = 49'b0001000011111001111101111111011101001111100001000;
+		case(states[c_k*STATE_SIZE +: STATE_SIZE])
+			4'b0000: bitmap = 49'b0011100010001001100100101010010011001000100011100;
+			4'b0001: bitmap = 49'b0111110000100000010000001000000101000011000001000;
+			4'b0010: bitmap = 49'b0111110000010000010000010000010000001000100011100;
+			4'b0011: bitmap = 49'b0011100010001001000000011000010000001000100011100;
+			4'b0100: bitmap = 49'b0010000001000001111100010010001010000110000010000;
+			4'b0101: bitmap = 49'b0011100010001001000000011100000001000000100111110;
+			4'b0110: bitmap = 49'b0011100010001001000100011110000001000000100011100;
+			4'b0111: bitmap = 49'b0001000000100000010000010000001000001000000111110;
+			4'b1000: bitmap = 49'b0011100010001001000100011100010001001000100011100;
+			4'b1001: bitmap = 49'b0001000011111001111101111111011101001111100001000;
 			default: bitmap = 49'b0000000000000000000000000000000000000000000000000;
 		endcase
 	end
 
 	reg [3:0] c_state, n_state;
-	
-	assign cs = c_state;
 	localparam 	REST 			=4'b0000,
 				DRAW_SQUARE		=4'b0001,
 				B_DRAW 			=4'b0010,
@@ -215,7 +211,7 @@ module drawBoard#(
 
 // ASSIGN STATES
 	always @(posedge clock) begin
-		if (!resetn) begin
+		if (!reset) begin
 			c_state <= REST;
 			c_x <= 0;
 			c_y <= 0;
@@ -246,7 +242,7 @@ module drawBoard#(
 				B_DRAW: begin
 					x_out <= c_x * 9 + x_shift;
 					y_out <= c_y * 9 + y_shift;
-					colour <= cursorGrid[c_k] ? 3'b100 : 3'b111; //red
+					colour <= cursorGrid[c_k] ? 3'b010 : 3'b101;
 					plotEn <= 1'b1;
 				end
 				B_X_SHIFT: begin
@@ -264,7 +260,8 @@ module drawBoard#(
 				C_DRAW: begin
 					x_out <= c_x * 9 + x_shift + 1'b1;
 					y_out <= c_y * 9 + y_shift + 1'b1;
-					colour <= (revealGrid[c_k] & bitmap[(y_shift*7)+x_shift]) ? 3'b111 : 3'b000;
+					//colour <= (revealGrid[c_k] & bitmap[(y_shift*7)+x_shift]) ? 3'b111 : 3'b000;
+					colour <= bitmap[(y_shift*7)+x_shift] ? 3'b111 : 3'b000;
 					plotEn <= 1'b1;
 				end
 				C_X_SHIFT: x_shift <= x_shift + 1'b1;
@@ -285,11 +282,44 @@ module drawBoard#(
 endmodule
 
 module drawWinLose#(
-	parameter GRID_SIZE=3
+	parameter GRID_SIZE = 3
 )(
-	input clock,
-	input 
-)
+	input clock,	
+	input reset,
+	
+	input [1:0] wl,
+	
+	output reg [7:0] x_out,
+	output reg [6:0] y_out,
+	output reg [2:0] colour,
+	output reg plotEn
+);
+	always @(posedge clock) begin
+		if(!reset) begin
+			x_out <= 8'd0;
+			y_out <= 7'd0;
+			colour <= 3'b000;
+			plotEn <= 0;
+		end else begin
+			plotEn <= 1;
+			if(wl == 2'b01) begin //win
+				colour <= 3'b010;
+			end else if(wl == 2'b10) begin //loss
+				colour <= 3'b001;
+			end
+			if(x_out < 8'd80) begin
+				x_out <= x_out+8'd1;
+			end else if(y_out < 7'd80) begin
+				x_out <= 8'd0;
+				y_out <= y_out+7'd1;
+			end else begin
+				x_out <= 8'd0;
+				y_out <= 7'd0;
+			end
+		end
+	end
+
+endmodule
 
 module drawBox#(
 	parameter GRID_BIT = 4,

@@ -1,3 +1,33 @@
+module fibo(
+	input [3:0] KEY,
+	output [9:0] LEDR
+);
+	wire [7:0] next;
+	reg [7:0] idx;
+	integer count;
+	
+	assign LEDR = idx;
+	
+	fibonacci_lfsr_nbit f (
+		.clock(KEY[1]),
+		.reset(KEY[0]),
+		.data(next)
+	);
+	
+	always @(posedge KEY[1]) begin
+		if(!KEY[0]) begin
+			idx <= 0;
+			count <= 9;
+		end else if(~KEY[2]) begin
+			count <= 9;
+		end else if(count > 0) begin
+			count <= count - 1;
+			idx <= (next > 8'd80) ? next >> 1'b1: next;
+		end
+	end
+
+endmodule
+
 //https://stackoverflow.com/a/20145147
 module fibonacci_lfsr_nbit
    #(parameter BITS = 8)
@@ -25,3 +55,4 @@ module fibonacci_lfsr_nbit
 	end
 
 endmodule
+
