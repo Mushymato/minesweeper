@@ -134,7 +134,7 @@ module minesweeper(
 		endcase
 	end
 	
-	/* vga_adapter VGA(
+	vga_adapter VGA(
 			.resetn(reset),
 			.clock(CLOCK_50),
 			.colour(colour),
@@ -153,7 +153,7 @@ module minesweeper(
 		defparam VGA.RESOLUTION = "160x120";
 		defparam VGA.MONOCHROME = "FALSE";
 		defparam VGA.BITS_PER_COLOUR_CHANNEL = 1;
-		defparam VGA.BACKGROUND_IMAGE = "black.mif";*/
+		defparam VGA.BACKGROUND_IMAGE = "black.mif";
 		
 endmodule
 
